@@ -1,0 +1,277 @@
+import axios from "axios";
+import AuthService from "../Auth/AuthServices";
+import { useState, useEffect } from "react";
+
+const baseURL = "http://localhost/api";
+
+// Requete GET
+export const useGetData = (url) => {
+    const [data, setData] = useState(null);   // Initialisé à null au lieu d'un tableau vide
+    const [error, setError] = useState(null); // Initialisé à null au lieu d'un tableau vide
+    const [loading, setLoading] = useState(true); // Pour gérer l'état de chargement
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const accessToken = AuthService.getAccessToken(); // Récupérer le token
+                if (!accessToken) {
+                    throw new Error('Token non disponible');
+                }
+                const response = await axios.get(`${baseURL}/${url}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${accessToken}` 
+                    }
+                });
+                setData(response.data);
+            } catch (error) {
+                if (error.response.status === 407) {
+                    alert('Session expriré', 'Votre session à expriré veillez vous reconnecter')
+                    navigate(/login)
+                }
+                setError(error);
+            } finally {
+                setLoading(false); // Fin du chargement, que ce soit succès ou échec
+            }
+        };
+
+        fetchData(); // Appel de la fonction asynchrone
+    }, [url]); // Dépendance à l'URL pour relancer la requête si l'URL change
+
+    return { data, error, loading };
+}
+
+
+// Requete POST
+export const usePostData = (url) => {
+    const [response, setResponse] = useState(null);
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    const postData = async (data) => {
+        setLoading(true);
+        try {
+            const accessToken = AuthService.getAccessToken();
+            if (!accessToken) {
+                throw new Error('Token non disponible');
+            }
+            const res = await axios.post(`${baseURL}/${url}`, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+            setResponse(res.data);
+        } catch (error) {
+            if (error.response.status === 407) {
+                alert('Session expriré', 'Votre session à expriré veillez vous reconnecter')
+                navigate(/login)
+            }
+            setError(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return {
+        response,
+        error,
+        loading,
+        postData // On retourne la fonction pour qu'elle puisse être appelée
+    };
+}
+
+
+// Requete PUT
+export const usePutData = (url) => {
+    const [response, setResponse] = useState(null);
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    const putData = async (data) => {
+        setLoading(true);
+        try {
+            const accessToken = AuthService.getAccessToken();$
+            if (!accessToken) {
+                throw new Error('Token non disponible');
+            }
+            const res = await axios.put(`${baseURL}/${url}`, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+            setResponse(res.data);
+        } catch (error) {
+            if (error.response.status === 407) {
+                alert('Session expriré', 'Votre session à expriré veillez vous reconnecter')
+                navigate(/login)
+            }            
+            setError(error);
+
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return {
+        response,
+        error,
+        loading,
+        putData
+    };
+}
+
+
+// Requete DELETE
+export const useDeleteData = (url) => {
+    const [response, setResponse] = useState(null);
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    const deleteData = async () => {
+        setLoading(true);
+        try {
+           
+            const accessToken = AuthService.getAccessToken();
+            if (!accessToken) {
+                throw new Error('Token non disponible');
+            }
+            const res = await axios.delete(`${baseURL}/${url}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+            setResponse(res.data);
+        } catch (error) {
+            if (error.response.status === 407) {
+                alert('Session expriré', 'Votre session à expriré veillez vous reconnecter')
+                navigate(/login)
+            }            
+            setError(error);
+
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return {
+        response,
+        error,
+        loading,
+        deleteData
+    };
+}
+
+
+
+
+/****////***/
+const MyComponent = () => {
+    const { response: postResponse, error: postError, loading: postLoading, postData } = usePostData('some-endpoint');
+    const { response: putResponse, error: putError, loading: putLoading, putData } = usePutData('some-endpoint/1');
+    const { response: deleteResponse, error: deleteError, loading: deleteLoading, deleteData } = useDeleteData('some-endpoint/1');
+
+    const handlePost = (data) => {
+        postData(data);
+    };
+
+    const handlePut = (data) => {
+        putData(data);
+    };
+
+    const handleDelete = () => {
+        deleteData();
+    };
+
+    return (
+        <div>
+            <button onClick={handlePost} disabled={postLoading}>Envoyer des données</button>
+            <button onClick={handlePut} disabled={putLoading}>Mettre à jour des données</button>
+            <button onClick={handleDelete} disabled={deleteLoading}>Supprimer des données</button>
+
+            {postLoading && <p>Chargement (POST)...</p>}
+            {putLoading && <p>Chargement (PUT)...</p>}
+            {deleteLoading && <p>Chargement (DELETE)...</p>}
+
+            {postResponse && <p>Réponse POST: {JSON.stringify(postResponse)}</p>}
+            {putResponse && <p>Réponse PUT: {JSON.stringify(putResponse)}</p>}
+            {deleteResponse && <p>Réponse DELETE: {JSON.stringify(deleteResponse)}</p>}
+
+            {postError && <p>Erreur POST: {postError.message}</p>}
+            {putError && <p>Erreur PUT: {putError.message}</p>}
+            {deleteError && <p>Erreur DELETE: {deleteError.message}</p>}
+        </div>
+    );
+};
+
+export default MyComponent;
+
+
+/*****////*/
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useGetData } from "../hooks/apiHooks";
+
+const MyComponent = () => {
+    const { IdTachesPriorites } = useParams();
+    const [tache, setTache] = useState(null);
+
+    // Définir l'URL en incluant l'IdTachesPriorites si nécessaire
+    const url = `taches/${IdTachesPriorites}`;
+    const { data, error, loading } = useGetData(url);
+
+    useEffect(() => {
+        if (data) {
+            setTache(data);
+        }
+    }, [data]);
+
+    if (loading) return <p>Chargement...</p>;
+    if (error) return <p>Erreur: {error.message}</p>;
+
+    return (
+        <div>
+            {tache ? (
+                <div>
+                    <h1>Détails de la tâche</h1>
+                    <p>ID: {tache.id}</p>
+                    <p>Nom: {tache.nomTache}</p>
+                    <p>Description: {tache.description}</p>
+                    {/* Ajouter d'autres détails de la tâche ici */}
+                </div>
+            ) : (
+                <p>Aucune tâche trouvée.</p>
+            )}
+        </div>
+    );
+};
+
+export default MyComponent;
+
+
+//***///
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const MyComponent = () => {
+    const navigate = useNavigate();
+
+    const handleGetById = (IdTachesPriorites) => {
+        const url = `/taches/${IdTachesPriorites}`;
+        navigate(url);
+    };
+
+    return (
+        <div>
+            {/* Exemple d'appel de la fonction */}
+            <button onClick={() => handleGetById(1)}>Voir la tâche 1</button>
+        </div>
+    );
+};
+
+export default MyComponent;
+
+

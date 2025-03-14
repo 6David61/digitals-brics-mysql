@@ -1,0 +1,9 @@
+DataBase/
+frontend/
+.vscode/
+backend/node_modules/
+backend/.env
+front-end/node_modules/
+front-end/.env
+backend-inviter-evenement/node_modules/
+backend-inviter-evenement/.env
